@@ -1,0 +1,214 @@
+<section id="guide">
+
+<h1>Guide</h1>
+
+<h2>Installation</h2>
+
+<p>Install LessQL via <a href="http://packagist.org">Composer</a>,
+	the package name is <code>morris/lessql</code>:</p>
+
+<pre><code data-language="json">
+{
+	"require": {
+		"morris/lessql": "~0.3"
+	}
+}
+</code></pre>
+
+<p>You can also download an archive from the
+	<a href="https://github.com/morris/lessql">GitHub repository</a>.</p>
+
+<p>LessQL requires PHP >= 5.3.0 and PDO.</p>
+
+<h2>Database</h2>
+
+<p>LessQL works on existing MySQL, PostgreSQL or SQLite3 databases.
+	There's no schema generation or migration in LessQL,
+	use a dedicated tool like <a href="https://phinx.org/">Phinx</a> for that.</p>
+
+<p>The following tables are used throughout this guide:</p>
+
+<pre><code>
+user:           id, name
+post:           id, title, body, date_published, is_published, user_id
+categorization: category_id, post_id
+category:       id, title
+</code></pre>
+
+<h2>Setup</h2>
+
+<p>Create a <code>PDO</code> instance and a <code>LessQL\Database</code> using it.
+	We will also need a few hints about our database so we define them at setup.</p>
+
+<pre><code data-language="php">
+$pdo = new \PDO( 'sqlite:blog.sqlite3' );
+$db = new \LessQL\Database( $pdo );
+
+$db-&gt;setAlias( 'author', 'user' );
+$db-&gt;setPrimary( 'categorization', array( 'category_id', 'post_id' ) );
+</code></pre>
+
+<p>We define <code>author</code> to be a table alias for <code>user</code>
+	and a compound primary key for the <code>categorization</code> table.
+	See the <a href="/conventions">Conventions</a> section for more information about schema hints.</p>
+
+<h2>Finding <small>and Traversal</small></h2>
+
+<p>The most interesting feature of LessQL is easy and performant traversal of associated tables.
+Here, we're iterating over four tables in an intuitive way,
+and the data is retrieved efficiently under the hood.</p>
+
+<pre><code data-language="php">
+foreach ( $db-&gt;post()
+	-&gt;orderBy( 'date_published', 'DESC' )
+	-&gt;where( 'is_published', 1 )
+	-&gt;paged( 10, 1 ) as $post ) {
+
+	// Get author of post
+	// Uses the pre-defined alias, gets from user where id is post.author_id
+	$author = $post-&gt;author()-&gt;fetch();
+
+	// Get category titles of post
+	$categories = array();
+
+	foreach ( $post-&gt;categorizationList()-&gt;category() as $category ) {
+
+		$categories[] = $category[ 'title' ];
+
+	}
+
+	// render post
+	$app-&gt;renderPost( $post, $author, $categories );
+
+}
+</code></pre>
+
+<p>LessQL creates only four queries to execute this example:</p>
+
+<pre><code>
+SELECT * FROM `post` WHERE `is_published` = 1 ORDER BY `published` DESC LIMIT 10 OFFSET 0
+SELECT * FROM `user` WHERE `id` IN ( ... )
+SELECT * FROM `categorization` WHERE `post_id` IN ( ... )
+SELECT * FROM `category` WHERE `id` IN ( ... )
+</code></pre>
+
+<div class="note">
+	<p>When traversing associations, LessQL always eagerly loads all references in one query.
+		This way, the number of queries is always constant,
+		no matter how "deep" you are traversing your database.</p>
+</div>
+
+<p>Let's step through the example in some detail.
+The first part iterates over a subset of posts:</p>
+
+<pre><code data-language="php">
+foreach ( $db-&gt;post()
+	-&gt;orderBy( 'date_published', 'DESC' )
+	-&gt;where( 'is_published', 1 )
+	-&gt;paged( 10, 1 ) as $post ) {
+</code></pre>
+
+<p>The <code>orderBy</code> and <code>where</code> calls are basic SQL,
+<code>paged( 10, 1 )</code> limits to page 1 where pages have a size of 10 posts.</p>
+
+<div class="note">
+	<p>Note that <code>Result</code> objects are <strong>immutable</strong>.
+		All filter methods like <code>where</code> or <code>orderBy</code>
+		return a new <code>Result</code> instance with the new <code>SELECT</code> information.</p>
+</div>
+
+<p>Inside the loop, we have access to <code>$post</code>.
+It is a <code>Row</code> instance which can be worked with like an associative array or object.
+It can be modified, saved, deleted, and you can retrieve associated rows.</p>
+
+<h2>Many-To-One</h2>
+
+<pre><code data-language="php">
+// Get author of post
+$author = $post-&gt;author()-&gt;fetch();
+</code></pre>
+
+<p>A post has one author, a <em>Many-To-One-Association</em>.
+LessQL will look for <code>author_id</code> in the post table and find the corresponding author, if any.</p>
+
+<p>Note the explicit <code>fetch()</code> to get the row.
+	This is required because you might want to get the author using other methods (<code>via</code>).<p>
+
+
+<h2>One-To-Many <small>and Many-To-Many, too</small></h2>
+
+<pre><code data-language="php">
+// Get category titles of post
+$categories = array();
+
+foreach ( $post-&gt;categorizationList()-&gt;category() as $category ) {
+
+	$categories[] = $category[ 'title' ];
+
+}
+</code></pre>
+
+<p>A post has many categorizations, a <em>One-To-Many-Association</em>.
+The <code>List</code> suffix in <code>$post-&gt;categorizationList()</code>
+tells LessQL to look for <code>post_id</code> in the categorization table
+and find all rows that point to our post.</p>
+
+<p>In turn, the categorization table points to the category table.
+This way we model a <em>Many-To-Many-Association</em> between posts and categories.</p>
+
+<p>Note how we directly call <code>-&gt;category()</code> without intermediate rows.</p>
+
+<h2>Saving</h2>
+
+<p>LessQL is capable of saving deeply nested structures with a single
+method call.</p>
+
+<pre><code data-language="php">
+$row = $db-&gt;createRow( 'post', array(
+	'title' => 'Fantasy Movie Review',
+	'author' => array(
+		'name' => 'Fantasy Guy'
+	),
+	'categorizationList' => array(
+
+		array(
+			'category' => array( 'title' => 'Movies' )
+		),
+		array(
+			'category' => $existingFantasyCategory
+		)
+
+	)
+) );
+
+// wrapping this in a transaction is a good practice and more performant
+$db-&gt;begin();
+$row-&gt;save();
+$db-&gt;commit();
+</code></pre>
+
+<p>LessQL generates all queries needed to save the structure, including
+references:</p>
+
+<pre><code>
+INSERT INTO `post` ( `title`, `author_id` ) VALUES ( 'Fantasy Movie Review', NULL )
+INSERT INTO `user` ( `name` ) VALUES ( 'Fantasy Guy' )
+UPDATE `post` SET `user_id` = ... WHERE `id` = ...
+INSERT INTO `category` ( `title` ) VALUES ( 'Movies' )
+INSERT INTO `categorization` ( `post_id`, `category_id` ) VALUES ( ... )
+INSERT INTO `categorization` ( `post_id`, `category_id` ) VALUES ( ... )
+</code></pre>
+
+<p>For this operation to work, two things are crucial:
+	First, <code>author_id</code> must be nullable.
+	Second, the database must know about the compound primary key of the <code>categorization</code> table.</p>
+
+<div class="note">
+	<p>Always define required columns and compound primary keys at setup.
+		See <a href="/conventions">Conventions</a> for more details.</p>
+</div>
+
+</section>
+
+<% var buffer = __output.join( '' ); __output.length = 0; %>
+<%- include( 'layout.ejs', { main: buffer } ) %>

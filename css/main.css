@@ -23,7 +23,7 @@ a:focus {
 	text-decoration: underline;
 }
 
-h2 {
+h1 {
 	margin: 20px 0;
 	font-family: Roboto Condensed, Helvetica, Arial, Sans-Serif;
 	font-weight: 300;
@@ -32,7 +32,7 @@ h2 {
 	text-align: center;
 }
 
-h3 {
+h2 {
 	margin: 20px 0;
 	font-family: Roboto Condensed, Helvetica, Arial, Sans-Serif;
 	font-weight: 300;
@@ -162,6 +162,8 @@ pre {
 #claim {
 	margin: 0;
 	text-align: center;
+	font-family: Roboto Condensed, Helvetica, Arial, Sans-Serif;
+	font-weight: 300;
 	font-size: 21.5px;
 	line-height: 21.5px;
 	color: #aa9;
@@ -186,7 +188,8 @@ pre {
 		margin: 0 auto;
 		font-family: Roboto Condensed, Helvetica, Arial, Sans-Serif;
 		font-weight: 300;
-		font-size: 16px;
+		font-size: 18px;
+		letter-spacing: 2px;
 	}
 
 		#nav li {
@@ -195,8 +198,23 @@ pre {
 
 	#nav a {
 		display: inline-block;
-		padding: 6px 10px;
+		padding: 10px 20px;
 		color: #fff;
+	}
+
+	@media ( max-width: 767px ) {
+
+		#nav ul {
+			font-size: 16px;
+			letter-spacing: 2px;
+		}
+
+		#nav a {
+			display: inline-block;
+			padding: 10px 10px;
+			color: #fff;
+		}
+
 	}
 
 #main section {

@@ -1,0 +1,89 @@
+<section id="about">
+
+<h1>About</h1>
+
+<p>
+LessQL is heavily inspired by <a href="http://notorm.com">NotORM</a>
+which presents a novel, intuitive API to SQL databases.
+Combined with an efficient implementation,
+its concepts are very unique to all database layers out there,
+whether they are ORMs, DBALs or something else.
+</p>
+
+<p>
+In contrast to ORM, you work directly with tables and rows.
+This has several advantages:
+</p>
+
+<ul>
+	<li><strong>Write less:</strong>
+		No glue code/objects required. Just work with your database directly.</li>
+	<li><strong>Transparency:</strong>
+		It is always obvious that your application code works with a 1:1 representation of your database.</li>
+	<li><strong>Relational power:</strong>
+		Leverage the relational features of SQL databases,
+		don't hide them using an inadequate&nbsp;abstraction.</li>
+</ul>
+
+<p>For more in-depth opinion why ORM is not always desirable, see:</p>
+
+<ul>
+	<li><a href="http://www.yegor256.com/2014/12/01/orm-offensive-anti-pattern.html" title="ORM Is an Offensive Anti-Pattern">http://www.yegor256.com/2014/12/01/orm-offensive-anti-pattern.html</a></li>
+	<li><a href="http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern" title="ORM is an anti-pattern">http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern</a></li>
+	<li><a href="http://en.wikipedia.org/wiki/Object-relational_impedance_mismatch" title="Object-relational impedance mismatch">http://en.wikipedia.org/wiki/Object-relational_impedance_mismatch</a></li>
+</ul>
+
+<hr>
+
+<p>NotORM introduced a unique and efficient solution to database abstraction.
+However, it does have a few weaknesses:</p>
+
+<ul>
+	<li>The API is not always intuitive: <code>$result-&gt;name</code> is different from <code>$result-&gt;name()</code> and more.
+	<li>There is no difference between One-To-Many and Many-To-One associations in the API (LessQL uses the <code>List</code> suffix for that).</li>
+	<li>There is no advanced save operation for nested structures.</li>
+	<li>Defining your database structure is hard (involves sub-classing).</li>
+	<li>The source code is very hard to read and understand.</li>
+</ul>
+
+<p>LessQL addresses all of these issues, is fully tested, and actively maintained.</p>
+
+<p>
+<a href="https://github.com/morris/lessql" title="Fork LessQL on GitHub">Contributions are always welcome.</a>
+Feedback is also appreciated; drop me a note at <a href="mb@morrisbrodersen.de">mb@morrisbrodersen.de</a>.
+</p>
+
+</section>
+
+<section id="license">
+
+<h1>License</h1>
+
+<pre>
+The MIT License (MIT)
+
+Copyright (c) 2015 Morris Brodersen &lt;mb@morrisbrodersen.de&gt;
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</pre>
+
+</section>
+
+<% var buffer = __output.join( '' ); __output.length = 0; %>
+<%- include( 'layout.ejs', { main: buffer } ) %>

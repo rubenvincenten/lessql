@@ -1,0 +1,197 @@
+<section id="api">
+
+<h1>API</h1>
+
+<p>This section covers the public, user-relevant API.
+There are more methods mainly used for communication between LessQL components.
+You can always view the source at <a href="https://github.com/morris/lessql">GitHub</a>.
+It is very readable and quite short.</p>
+
+<h2>Setup</h2>
+
+<p>Creating a database:</p>
+
+<pre><code data-language="php">
+$db = new \LessQL\Database( $pdo );
+</code></pre>
+
+<p>Defining schema information (see <a href="/conventions">Conventions</a> for usage):</p>
+
+<pre><code data-language="php">
+$db-&gt;setAlias( $alias, $table );
+$db-&gt;setPrimary( $table, $column );
+$db-&gt;setReference( $table, $name, $column );
+$db-&gt;setBackReference( $table, $name, $column );
+$db-&gt;setRequired( $table, $column );
+$db-&gt;setRewrite( $rewriteFunc );
+$db-&gt;setIdentifierDelimiter( $delimiter ); // default is ` (backtick)
+</code></pre>
+
+<p>Set a query callback (e.g. for logging):</p>
+
+<pre><code data-language="php">
+$db-&gt;setQueryCallback( function( $query, $params ) { ... } );
+</code></pre>
+
+<h2>Basic finding</h2>
+
+<pre><code data-language="php">
+$result = $db-&gt;table_name()
+$result = $db-&gt;table( 'table_name' )
+$row = $result-&gt;fetch()      // fetch next row in result
+$rows = $result-&gt;fetchAll()  // fetch all rows
+foreach ( $result as $row ) { ... }
+json_encode( $result )       // finds and encodes all rows (requires PHP >= 5.4.0)
+
+// get a row directly by primary key
+$row = $db-&gt;table_name( $id )
+$row = $db-&gt;table( 'table_name', $id )
+</code></pre>
+
+<h2>Deep finding <small>Association traversal</small></h2>
+
+<pre><code data-language="php">
+$assoc = $result-&gt;table_name()       // get one row, reference
+$assoc = $result-&gt;table_nameList()   // get many rows, back reference
+$assoc = $result-&gt;referenced( 'table_name' )
+$assoc = $result-&gt;referenced( 'table_nameList' )
+
+$assoc = $row-&gt;table_name()          // get one row, reference
+$assoc = $row-&gt;table_nameList()      // get many rows, back reference
+$assoc = $row-&gt;referenced( 'table_name' )
+$assoc = $row-&gt;referenced( 'table_nameList' )
+
+$assoc = $row-&gt;table_name()-&gt;via( $key ); // use alternate foreign key
+</code></pre>
+
+<h2>Where</h2>
+
+<p><code>WHERE</code> may also be applied to association results.</p>
+
+<pre><code data-language="php">
+$result2 = $result-&gt;where( $column, null )    // WHERE $column IS NULL
+$result2 = $result-&gt;where( $column, $value )  // WHERE $column = $value (escaped)
+$result2 = $result-&gt;where( $column, $array )  // WHERE $column IN $array (escaped)
+                                   // $array containing null is respected with OR $column IS NULL
+
+$result2 = $result-&gt;whereNot( $column, null )    // WHERE $column IS NOT NULL
+$result2 = $result-&gt;whereNot( $column, $value )  // WHERE $column != $value (escaped)
+$result2 = $result-&gt;whereNot( $column, $array )  // WHERE $column NOT IN $array (escaped)
+                                      // $array containing null is respected with AND $column IS NOT NULL
+
+$result2 = $result-&gt;where( $whereString, $param1, $param2, ... ) // numeric params for PDO
+$result2 = $result-&gt;where( $whereString, $paramArray )           // named and/or numeric params for PDO
+
+$result2 = $result-&gt;where( $array )    // for each key-value pair, call $result-&gt;where( $key, $value )
+$result2 = $result-&gt;whereNot( $array ) // for each key-value pair, call $result-&gt;whereNot( $key, $value )
+</code></pre>
+
+<h2>Selected columns, Order and Limit</h2>
+
+<p>Note that you can order association results, but you cannot use <code>LIMIT</code> on them.</p>
+
+<pre><code data-language="php">
+$result2 = $result-&gt;select( $expr )  // identfiers NOT escaped, so expressions are possible
+                          // multiple calls are joined with a comma
+
+// $column will be escaped
+$result2 = $result-&gt;orderBy( $column );
+$result2 = $result-&gt;orderBy( $column, 'ASC' );
+$result2 = $result-&gt;orderBy( $column, 'DESC' );
+
+$result2 = $result-&gt;limit( $count );
+$result2 = $result-&gt;limit( $count, $offset );
+$result2 = $result-&gt;paged( $pageSize, $page );  // pages start at 1
+</code></pre>
+
+<div class="note">
+	<p>Note that <code>Result</code> objects are <strong>immutable</strong>.
+		All filter methods like <code>where</code> or <code>orderBy</code>
+		return a new <code>Result</code> instance with the new <code>SELECT</code> information.</p>
+</div>
+
+<h2>Aggregation</h2>
+
+<p>Aggregation is only supported by basic results.
+	The methods execute the query and return the calculated value directly.</p>
+
+<pre><code data-language="php">
+$result-&gt;count( $expr = '*' )   // SELECT COUNT( $expr ) FROM ...
+$result-&gt;min( $expr )           // SELECT MIN( $expr )   FROM ...
+$result-&gt;max( $expr )           // SELECT MAX( $expr )   FROM ...
+$result-&gt;sum( $expr )           // SELECT SUM( $expr )   FROM ...
+$result-&gt;aggregate( $expr )     // SELECT $expr          FROM ...
+</code></pre>
+
+<h2>Manipulation</h2>
+
+<pre><code data-language="php">
+$statement = $result-&gt;insert( $row )   // $row is a data array
+
+// $rows is array of data arrays
+// one INSERT per row, slow for many rows
+// supports Literals, works everywhere
+$statement = $result-&gt;insert( $rows )
+
+// use prepared PDO statement
+// does not support Literals (PDO limitation)
+$statement = $result-&gt;insert( $rows, 'prepared' )
+
+// one query with multiple value lists
+// supports Literals, but not supported in all PDO drivers (SQLite fails)
+$statement = $result-&gt;insert( $rows, 'batch' )
+
+$statement = $result-&gt;update( $set )   // updates rows matched by the result (UPDATE ... WHERE ...)
+$statement = $result-&gt;delete()         // deletes rows matched by the result (DELETE ... WHERE ...)
+</code></pre>
+
+<h2>Transactions</h2>
+
+<pre><code data-language="php">
+$db-&gt;begin()
+$db-&gt;commit()
+$db-&gt;rollback()
+</code></pre>
+
+<h2>Rows</h2>
+
+<pre><code data-language="php">
+// create row from scratch
+$row = $db-&gt;createRow( $table, $properties = array() )
+$row = $db-&gt;table_name()-&gt;createRow( $properties = array() )
+
+// get or set properties
+$row-&gt;property
+$row-&gt;property = $value
+isset( $row-&gt;property )
+unset( $row-&gt;property )
+
+// array access is equivalent to property access
+$row[ 'property' ]
+$row[ 'property' ] = $value
+isset( $row[ 'property' ] )
+unset( $row[ 'property' ] )
+
+$row-&gt;setData( $array ) // sets data on row, extending it
+
+// manipulation
+$row-&gt;isClean()       // returns true if in sync with database
+$row-&gt;exists()        // returns true if the row exists in the database
+$row-&gt;save()          // inserts if not in database, updates changes (only) otherwise
+$row-&gt;update( $data ) // set data and save
+$row-&gt;delete()
+
+// references
+$assoc = $row-&gt;table_name()         // get one row, reference
+$assoc = $row-&gt;table_nameList()     // get many rows, back reference
+$assoc = $row-&gt;referenced( 'table_name' )
+$assoc = $row-&gt;referenced( 'table_nameList' )
+
+json_encode( $row )
+foreach ( $row as $name => $value ) { ... }  // iterate over properties
+</code></pre>
+
+</section>
+
+<% var buffer = __output.join( '' ); __output.length = 0; %>
+<%- include( 'layout.ejs', { main: buffer } ) %>

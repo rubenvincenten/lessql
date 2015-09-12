@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="LessQL is an agile PHP ORM alternative.">
+	<meta name="keywords" content="LessQL, PHP, ORM, NotORM, PDO, SQL">
+	<meta name="author" content="Morris Brodersen">
+
+	<title>LessQL: PHP ORM Alternative</title>
+
+	<link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+	<link href="css/normalize.css" rel="stylesheet">
+	<link href="css/main.css" rel="stylesheet">
+</head>
+
+<body>
+
+<script>
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	ga('create', 'UA-50578639-2', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+</script>
+
+<div id="container">
+
+	<header id="top" role="banner">
+
+		<h1 id="logo"><a href="#top">LessQL</a></h1>
+		<h2 id="claim">The agile PHP ORM alternative</h2>
+
+		<nav id="nav" role="navigation">
+
+			<ul>
+
+				<li><a href="#top">Intro</a></li>
+				<li><a href="#guide">Guide</a></li>
+				<li><a href="#conventions">Conventions</a></li>
+				<li><a href="#api">API</a></li>
+				<li><a href="#about">About</a></li>
+				<li><a href="#license">License</a></li>
+				<li><a href="http://github.com/morris/lessql">GitHub</a></li>
+
+			</ul>
+
+		</nav>
+
+	</header>
+
+    <main id="main" role="main">
+
+		<section id="intro">
+
+<h2>LessQL is a lightweight and efficient alternative to Object-Relational Mapping for PHP.</h2>
+<p class="center">A novel, intuitive approach to SQL databases that performs:</p>
+
+<pre><code data-language="php">
+// Connect to database
+$pdo = new PDO( 'sqlite:blog.sqlite3' );
+$db = new LessQL\Database( $pdo );
+
+// Find posts, their authors and categories efficiently:
+// Eager loading of references happens automatically.
+// This example only needs FOUR queries, one for each table.
+foreach ( $db-&gt;post()
+	-&gt;where( 'is_published', 1 )
+	-&gt;orderBy( 'date_published', 'DESC' ) as $post ) {
+
+	$author = $post-&gt;user()-&gt;fetch();
+
+	foreach ( $post-&gt;categorizationList()-&gt;category() as $category ) {
+
+		// ...
+
+	}
+
+}
+</code></pre>
+
+<div class="grid center">
+
+	<div class="col-1-3">
+		<h3 class="upper">Less Code</h3>
+		<p>No models, no configuration, no glue code.
+			Just start working with your existing database immediately.</p>
+	</div>
+
+	<div class="col-1-3">
+		<h3 class="upper">Less Queries</h3>
+		<p>Find associated data from multiple database tables using a minimal amount of queries.
+			No more N+1&nbsp;problems.</p>
+	</div>
+
+	<div class="col-1-3">
+		<h3 class="upper">Less Hassle</h3>
+		<p>The concise and intuitive <a href="#api">API</a>
+			is easily learned and provides all the capabilities you need.</p>
+	</div>
+
+</div>
+
+<div class="grid center">
+
+	<div class="col-1-3">
+		<h3 class="upper">Direct</h3>
+		<p>Work closely to your database instead of using an
+			<a href="#about">inadequate abstraction layer</a>.</p>
+	</div>
+
+	<div class="col-1-3">
+		<h3 class="upper">Powerful</h3>
+		<p>Save complex, nested structures with one method call,
+			blend with raw SQL at any time, and more.</p>
+	</div>
+
+	<div class="col-1-3">
+		<h3 class="upper">Tested</h3>
+		<p>Fully tested with MySQL, PostgreSQL, and SQLite3.</p>
+	</div>
+
+</div>
+
+<p class="center mt">
+	<a href="https://travis-ci.org/morris/lessql"><img src="https://camo.githubusercontent.com/b8bac5d56ab0c58224cf601a2daa24e4b46d5fb6/68747470733a2f2f7472617669732d63692e6f72672f6d6f727269732f6c657373716c2e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/morris/lessql.svg?branch=master" style="max-width:100%;"></a>
+	<a href="https://codeclimate.com/github/morris/lessql/coverage"><img src="https://camo.githubusercontent.com/1725c83e1402073b5982393be11e319a5128cafd/68747470733a2f2f636f6465636c696d6174652e636f6d2f6769746875622f6d6f727269732f6c657373716c2f6261646765732f636f7665726167652e737667" alt="Test Coverage" data-canonical-src="https://codeclimate.com/github/morris/lessql/badges/coverage.svg" style="max-width:100%;"></a>
+	<a href="https://gitter.im/morris/lessql?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/morris/lessql" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a>
+</p>
+
+		</section>
+
+		<section id="guide">
+
+<h2>Guide</h2>
+
+<h3>Installation</h3>
+
+<p>Install LessQL via <a href="http://packagist.org">Composer</a>,
+	the package name is <code>morris/lessql</code>:</p>
+
+<pre><code data-language="json">
+{
+	"require": {
+		"morris/lessql": "~0.3"
+	}
+}
+</code></pre>
+
+<p>You can also download an archive from the
+	<a href="https://github.com/morris/lessql">GitHub repository</a>.</p>
+
+<p>LessQL requires PHP >= 5.3.0 and PDO.</p>
+
+<h3>Database</h3>
+
+<p>LessQL works on existing MySQL, PostgreSQL or SQLite3 databases.
+	There's no schema generation or migration in LessQL,
+	use a dedicated tool like <a href="https://phinx.org/">Phinx</a> for that.</p>
+
+<p>The following tables are used throughout this guide:</p>
+
+<pre><code>
+user:           id, name
+post:           id, title, body, date_published, is_published, user_id
+categorization: category_id, post_id
+category:       id, title
+</code></pre>
+
+<h3>Setup</h3>
+
+<p>Create a <code>PDO</code> instance and a <code>LessQL\Database</code> using it.
+	We will also need a few hints about our database so we define them at setup.</p>
+
+<pre><code data-language="php">
+$pdo = new \PDO( 'sqlite:blog.sqlite3' );
+$db = new \LessQL\Database( $pdo );
+
+$db-&gt;setAlias( 'author', 'user' );
+$db-&gt;setPrimary( 'categorization', array( 'category_id', 'post_id' ) );
+</code></pre>
+
+<p>We define <code>author</code> to be a table alias for <code>user</code>
+	and a compound primary key for the <code>categorization</code> table.
+	See the <a href="#conventions">Conventions</a> section for more information about schema hints.</p>
+
+<h3>Finding <small>and Traversal</small></h3>
+
+<p>The most interesting feature of LessQL is easy and performant traversal of associated tables.
+Here, we're iterating over four tables in an intuitive way,
+and the data is retrieved efficiently under the hood.</p>
+
+<pre><code data-language="php">
+foreach ( $db-&gt;post()
+	-&gt;orderBy( 'date_published', 'DESC' )
+	-&gt;where( 'is_published', 1 )
+	-&gt;paged( 10, 1 ) as $post ) {
+
+	// Get author of post
+	// Uses the pre-defined alias, gets from user where id is post.author_id
+	$author = $post-&gt;author()-&gt;fetch();
+
+	// Get category titles of post
+	$categories = array();
+
+	foreach ( $post-&gt;categorizationList()-&gt;category() as $category ) {
+
+		$categories[] = $category[ 'title' ];
+
+	}
+
+	// render post
+	$app-&gt;renderPost( $post, $author, $categories );
+
+}
+</code></pre>
+
+<p>LessQL creates only four queries to execute this example:</p>
+
+<pre><code>
+SELECT * FROM `post` WHERE `is_published` = 1 ORDER BY `published` DESC LIMIT 10 OFFSET 0
+SELECT * FROM `user` WHERE `id` IN ( ... )
+SELECT * FROM `categorization` WHERE `post_id` IN ( ... )
+SELECT * FROM `category` WHERE `id` IN ( ... )
+</code></pre>
+
+<div class="note">
+	<p>When traversing associations, LessQL always eagerly loads all references in one query.
+		This way, the number of queries is always constant,
+		no matter how "deep" you are traversing your database.</p>
+</div>
+
+<p>Let's step through the example in some detail.
+The first part iterates over a subset of posts:</p>
+
+<pre><code data-language="php">
+foreach ( $db-&gt;post()
+	-&gt;orderBy( 'date_published', 'DESC' )
+	-&gt;where( 'is_published', 1 )
+	-&gt;paged( 10, 1 ) as $post ) {
+</code></pre>
+
+<p>The <code>orderBy</code> and <code>where</code> calls are basic SQL,
+<code>paged( 10, 1 )</code> limits to page 1 where pages have a size of 10 posts.</p>
+
+<div class="note">
+	<p>Note that <code>Result</code> objects are <strong>immutable</strong>.
+		All filter methods like <code>where</code> or <code>orderBy</code>
+		return a new <code>Result</code> instance with the new <code>SELECT</code> information.</p>
+</div>
+
+<p>Inside the loop, we have access to <code>$post</code>.
+It is a <code>Row</code> instance which can be worked with like an associative array or object.
+It can be modified, saved, deleted, and you can retrieve associated rows.</p>
+
+<h3>Many-To-One</h3>
+
+<pre><code data-language="php">
+// Get author of post
+$author = $post-&gt;author()-&gt;fetch();
+</code></pre>
+
+<p>A post has one author, a <em>Many-To-One-Association</em>.
+LessQL will look for <code>author_id</code> in the post table and find the corresponding author, if any.</p>
+
+<p>Note the explicit <code>fetch()</code> to get the row.
+	This is required because you might want to get the author using other methods (<code>via</code>).<p>
+
+
+<h3>One-To-Many <small>and Many-To-Many, too</small></h3>
+
+<pre><code data-language="php">
+// Get category titles of post
+$categories = array();
+
+foreach ( $post-&gt;categorizationList()-&gt;category() as $category ) {
+
+	$categories[] = $category[ 'title' ];
+
+}
+</code></pre>
+
+<p>A post has many categorizations, a <em>One-To-Many-Association</em>.
+The <code>List</code> suffix in <code>$post-&gt;categorizationList()</code>
+tells LessQL to look for <code>post_id</code> in the categorization table
+and find all rows that point to our post.</p>
+
+<p>In turn, the categorization table points to the category table.
+This way we model a <em>Many-To-Many-Association</em> between posts and categories.</p>
+
+<p>Note how we directly call <code>-&gt;category()</code> without intermediate rows.</p>
+
+<h3>Saving</h3>
+
+<p>LessQL is capable of saving deeply nested structures with a single
+method call.</p>
+
+<pre><code data-language="php">
+$row = $db-&gt;createRow( 'post', array(
+	'title' => 'Fantasy Movie Review',
+	'author' => array(
+		'name' => 'Fantasy Guy'
+	),
+	'categorizationList' => array(
+
+		array(
+			'category' => array( 'title' => 'Movies' )
+		),
+		array(
+			'category' => $existingFantasyCategory
+		)
+
+	)
+) );
+
+// wrapping this in a transaction is a good practice and more performant
+$db-&gt;begin();
+$row-&gt;save();
+$db-&gt;commit();
+</code></pre>
+
+<p>LessQL generates all queries needed to save the structure, including
+references:</p>
+
+<pre><code>
+INSERT INTO `post` ( `title`, `author_id` ) VALUES ( 'Fantasy Movie Review', NULL )
+INSERT INTO `user` ( `name` ) VALUES ( 'Fantasy Guy' )
+UPDATE `post` SET `user_id` = ... WHERE `id` = ...
+INSERT INTO `category` ( `title` ) VALUES ( 'Movies' )
+INSERT INTO `categorization` ( `post_id`, `category_id` ) VALUES ( ... )
+INSERT INTO `categorization` ( `post_id`, `category_id` ) VALUES ( ... )
+</code></pre>
+
+<p>For this operation to work, two things are crucial:
+	First, <code>author_id</code> must be nullable.
+	Second, the database must know about the compound primary key of the <code>categorization</code> table.</p>
+
+<div class="note">
+	<p>Always define required columns and compound primary keys at setup.
+		See <a href="#conventions">Conventions</a> for more details.</p>
+</div>
+
+
+		</section>
+
+		<section id="conventions">
+
+<h2>Conventions <small>and Workarounds</small></h2>
+
+<p>LessQL relies entirely on two conventions:</p>
+
+<ul>
+	<li>Primary key columns should be <code>id</code> and</li>
+	<li>foreign key columns should be <code>&lt;table&gt;_id</code>.</li>
+</ul>
+
+<div class="note">
+	<p>A side effect of these conventions is to use <strong>singular table names</strong>,
+		because plurals are irregular and <code>product.categories_id</code> sounds wrong.</p>
+</div>
+
+<p>More often than not, these conventions are not enough to work with your database,
+and workarounds are needed. You will most likely have join
+tables with compound primary keys. Or you might have
+two columns in one table pointing to the same foreign table.</p>
+
+<p>LessQL provides solutions for all of these use cases.
+This section contains real-world examples showing how to define
+alternate primary keys, assocations and reference keys.</p>
+
+<div class="note">
+	<p>Because SQL is case-insensitive, you should always use
+		<code>snake_case</code> for table names, column names, and aliases.</p>
+</div>
+
+<h3>Required columns</h3>
+
+<p>When saving complex structures, LessQL needs a way to know which
+columns and especially foreign keys are required (<code>NOT NULL</code>).
+This way, rows with required columns are saved last with all their foreign
+keys set.</p>
+
+<p>Whenever you get "some column may not be null" exceptions, this should solve that.</p>
+
+<pre><code data-language="php">
+$db-&gt;setRequired( 'post', 'user_id' );
+</code></pre>
+
+<h3>Alternate foreign keys</h3>
+
+<p>You can use alternate foreign keys in associations using <code>via</code>:</p>
+
+<pre><code data-language="php">
+foreach ( $db-&gt;post() as $post ) {
+
+	// single: use post.author_id instead of post.user_id
+	$author = $post-&gt;user()-&gt;via( 'author_id' )-&gt;fetch();
+
+	// list: use category.featured_post_id instead of category.post_id
+	$featureCategories = $post-&gt;categoryList()-&gt;via( 'featured_post_id' );
+
+}
+</code></pre>
+
+<p>This is quick and easy, but repetitive. It is often better to
+define these things globally using one of the following methods.</p>
+
+<h3>Table Aliasing</h3>
+
+<p>Let <code>customer</code> have columns <code>address_id</code> and <code>billing_address_id</code>.
+Both columns point to the <code>address</code> table, but the
+association <code>billing_address</code> would try to query
+the <code>billing_address</code> table. For this
+situation, LessQL lets you define <strong>table aliases</strong>:</p>
+
+<pre><code data-language="php">
+$db-&gt;setAlias( 'billing_address', 'address' );
+$db-&gt;customer()-&gt;billing_address();
+</code></pre>
+
+<p>This association will use <code>customer.billing_address_id</code>
+as reference key and <code>address</code> as table.
+Note how we are using the association name, <em>not</em> the table name.</p>
+
+<h3>Back References</h3>
+
+<p>Consider again the use case from above. Let's try to access the
+data the other way around: Starting with an address,
+how would you get users that point to it via <code>billing_address_id</code>?
+The solution is using <strong>back references</strong> and aliases and looks like this:</p>
+
+<pre><code data-language="php">
+$db-&gt;address()-&gt;userList(); // works by convention
+
+$db-&gt;setAlias( 'user_billing', 'user' );
+$db-&gt;setBackReference( 'address', 'user_billing', 'billing_address_id' );
+$db-&gt;address()-&gt;user_billingList();
+</code></pre>
+
+<p>Setting a back reference key in this case states:
+<code>address</code> is referenced by <code>user_billing</code> using
+<code>billing_address_id</code>.</p>
+
+<h3>Alternate Primary Keys</h3>
+
+<p>Primary keys should be named <code>id</code>, but if a primary key goes by a
+different column name you can override it easily with
+<code>$db-&gt;setPrimary( 'user', 'uid' )</code>.</p>
+
+<p>Compound primary keys are also possible and
+especially useful for join tables:
+<code>$db-&gt;setPrimary( 'categorization', array( 'post_id', 'category_id' ) )</code>.</p>
+
+<p><strong>You should always define compound keys manually.</strong> Without these definitions,
+saving nested structures may fail because LessQL cannot know which
+columns are required for a complete primary key.
+</p>
+
+<h3>Alternate Reference Keys</h3>
+
+<p>Foreign keys should be named <code>&lt;table&gt;_id</code>, but if a foreign key goes by a
+different column name you can override it easily with
+<code>$db-&gt;setReference( 'post', 'user', 'uid' )</code>,
+which basically states the following: <code>post</code> references <code>user</code>
+using the column <code>uid</code>.</p>
+
+<p>We're using the term <em>reference</em> to distinguish from <em>back references</em>,
+as both use foreign keys.</p>
+
+<h3>Table prefixes <small>and other custom table schemes</small></h3>
+
+<p>To add a prefix to your tables, you can define a table rewrite function:</p>
+
+<pre><code data-language="php">
+$db-&gt;setRewrite( function( $table ) {
+
+	return 'prefix_' . $table;
+
+} );
+</code></pre>
+
+<p>The function is completely arbitrary and will rewrite tables directly before executing any query.</p>
+
+		</section>
+
+		<section id="api">
+
+<h2>API</h2>
+
+<p>This section covers the public, user-relevant API.
+There are more methods mainly used for communication between LessQL components.
+You can always view the source at <a href="https://github.com/morris/lessql">GitHub</a>.
+It is very readable and quite short.</p>
+
+<h3>Setup</h3>
+
+<p>Creating a database:</p>
+
+<pre><code data-language="php">
+$db = new \LessQL\Database( $pdo );
+</code></pre>
+
+<p>Defining schema information (see <a href="#conventions">Conventions</a> for usage):</p>
+
+<pre><code data-language="php">
+$db-&gt;setAlias( $alias, $table );
+$db-&gt;setPrimary( $table, $column );
+$db-&gt;setReference( $table, $name, $column );
+$db-&gt;setBackReference( $table, $name, $column );
+$db-&gt;setRequired( $table, $column );
+$db-&gt;setRewrite( $rewriteFunc );
+$db-&gt;setIdentifierDelimiter( $delimiter ); // default is ` (backtick)
+</code></pre>
+
+<p>Set a query callback (e.g. for logging):</p>
+
+<pre><code data-language="php">
+$db-&gt;setQueryCallback( function( $query, $params ) { ... } );
+</code></pre>
+
+<h3>Basic finding</h3>
+
+<pre><code data-language="php">
+$result = $db-&gt;table_name()
+$result = $db-&gt;table( 'table_name' )
+$row = $result-&gt;fetch()      // fetch next row in result
+$rows = $result-&gt;fetchAll()  // fetch all rows
+foreach ( $result as $row ) { ... }
+json_encode( $result )       // finds and encodes all rows (requires PHP >= 5.4.0)
+
+// get a row directly by primary key
+$row = $db-&gt;table_name( $id )
+$row = $db-&gt;table( 'table_name', $id )
+</code></pre>
+
+<h3>Deep finding <small>Association traversal</small></h3>
+
+<pre><code data-language="php">
+$assoc = $result-&gt;table_name()       // get one row, reference
+$assoc = $result-&gt;table_nameList()   // get many rows, back reference
+$assoc = $result-&gt;referenced( 'table_name' )
+$assoc = $result-&gt;referenced( 'table_nameList' )
+
+$assoc = $row-&gt;table_name()          // get one row, reference
+$assoc = $row-&gt;table_nameList()      // get many rows, back reference
+$assoc = $row-&gt;referenced( 'table_name' )
+$assoc = $row-&gt;referenced( 'table_nameList' )
+
+$assoc = $row-&gt;table_name()-&gt;via( $key ); // use alternate foreign key
+</code></pre>
+
+<h3>Where</h3>
+
+<p><code>WHERE</code> may also be applied to association results.</p>
+
+<pre><code data-language="php">
+$result2 = $result-&gt;where( $column, null )    // WHERE $column IS NULL
+$result2 = $result-&gt;where( $column, $value )  // WHERE $column = $value (escaped)
+$result2 = $result-&gt;where( $column, $array )  // WHERE $column IN $array (escaped)
+                                   // $array containing null is respected with OR $column IS NULL
+
+$result2 = $result-&gt;whereNot( $column, null )    // WHERE $column IS NOT NULL
+$result2 = $result-&gt;whereNot( $column, $value )  // WHERE $column != $value (escaped)
+$result2 = $result-&gt;whereNot( $column, $array )  // WHERE $column NOT IN $array (escaped)
+                                      // $array containing null is respected with AND $column IS NOT NULL
+
+$result2 = $result-&gt;where( $whereString, $param1, $param2, ... ) // numeric params for PDO
+$result2 = $result-&gt;where( $whereString, $paramArray )           // named and/or numeric params for PDO
+
+$result2 = $result-&gt;where( $array )    // for each key-value pair, call $result-&gt;where( $key, $value )
+$result2 = $result-&gt;whereNot( $array ) // for each key-value pair, call $result-&gt;whereNot( $key, $value )
+</code></pre>
+
+<h3>Selected columns, Order and Limit</h3>
+
+<p>Note that you can order association results, but you cannot use <code>LIMIT</code> on them.</p>
+
+<pre><code data-language="php">
+$result2 = $result-&gt;select( $expr )  // identfiers NOT escaped, so expressions are possible
+                          // multiple calls are joined with a comma
+
+// $column will be escaped
+$result2 = $result-&gt;orderBy( $column );
+$result2 = $result-&gt;orderBy( $column, 'ASC' );
+$result2 = $result-&gt;orderBy( $column, 'DESC' );
+
+$result2 = $result-&gt;limit( $count );
+$result2 = $result-&gt;limit( $count, $offset );
+$result2 = $result-&gt;paged( $pageSize, $page );  // pages start at 1
+</code></pre>
+
+<div class="note">
+	<p>Note that <code>Result</code> objects are <strong>immutable</strong>.
+		All filter methods like <code>where</code> or <code>orderBy</code>
+		return a new <code>Result</code> instance with the new <code>SELECT</code> information.</p>
+</div>
+
+<h3>Aggregation</h3>
+
+<p>Aggregation is only supported by basic results.
+	The methods execute the query and return the calculated value directly.</p>
+
+<pre><code data-language="php">
+$result-&gt;count( $expr = '*' )   // SELECT COUNT( $expr ) FROM ...
+$result-&gt;min( $expr )           // SELECT MIN( $expr )   FROM ...
+$result-&gt;max( $expr )           // SELECT MAX( $expr )   FROM ...
+$result-&gt;sum( $expr )           // SELECT SUM( $expr )   FROM ...
+$result-&gt;aggregate( $expr )     // SELECT $expr          FROM ...
+</code></pre>
+
+<h3>Manipulation</h3>
+
+<pre><code data-language="php">
+$statement = $result-&gt;insert( $row )   // $row is a data array
+
+// $rows is array of data arrays
+// one INSERT per row, slow for many rows
+// supports Literals, works everywhere
+$statement = $result-&gt;insert( $rows )
+
+// use prepared PDO statement
+// does not support Literals (PDO limitation)
+$statement = $result-&gt;insert( $rows, 'prepared' )
+
+// one query with multiple value lists
+// supports Literals, but not supported in all PDO drivers (SQLite fails)
+$statement = $result-&gt;insert( $rows, 'batch' )
+
+$statement = $result-&gt;update( $set )   // updates rows matched by the result (UPDATE ... WHERE ...)
+$statement = $result-&gt;delete()         // deletes rows matched by the result (DELETE ... WHERE ...)
+</code></pre>
+
+<h3>Transactions</h3>
+
+<pre><code data-language="php">
+$db-&gt;begin()
+$db-&gt;commit()
+$db-&gt;rollback()
+</code></pre>
+
+<h3>Rows</h3>
+
+<pre><code data-language="php">
+// create row from scratch
+$row = $db-&gt;createRow( $table, $properties = array() )
+$row = $db-&gt;table_name()-&gt;createRow( $properties = array() )
+
+// get or set properties
+$row-&gt;property
+$row-&gt;property = $value
+isset( $row-&gt;property )
+unset( $row-&gt;property )
+
+// array access is equivalent to property access
+$row[ 'property' ]
+$row[ 'property' ] = $value
+isset( $row[ 'property' ] )
+unset( $row[ 'property' ] )
+
+$row-&gt;setData( $array ) // sets data on row, extending it
+
+// manipulation
+$row-&gt;isClean()       // returns true if in sync with database
+$row-&gt;exists()        // returns true if the row exists in the database
+$row-&gt;save()          // inserts if not in database, updates changes (only) otherwise
+$row-&gt;update( $data ) // set data and save
+$row-&gt;delete()
+
+// references
+$assoc = $row-&gt;table_name()         // get one row, reference
+$assoc = $row-&gt;table_nameList()     // get many rows, back reference
+$assoc = $row-&gt;referenced( 'table_name' )
+$assoc = $row-&gt;referenced( 'table_nameList' )
+
+json_encode( $row )
+foreach ( $row as $name => $value ) { ... }  // iterate over properties
+</code></pre>
+
+		</section>
+
+		<section id="about">
+
+<h2>About</h2>
+
+<p>
+LessQL is heavily inspired by <a href="http://notorm.com">NotORM</a>
+which presents a novel, intuitive API to SQL databases.
+Combined with an efficient implementation,
+its concepts are very unique to all database layers out there,
+whether they are ORMs, DBALs or something else.
+</p>
+
+<p>
+In contrast to ORM, you work directly with tables and rows.
+This has several advantages:
+</p>
+
+<ul>
+	<li><strong>Write less:</strong>
+		No glue code/objects required. Just work with your database directly.</li>
+	<li><strong>Transparency:</strong>
+		It is always obvious that your application code works with a 1:1 representation of your database.</li>
+	<li><strong>Relational power:</strong>
+		Leverage the relational features of SQL databases,
+		don't hide them using an inadequate&nbsp;abstraction.</li>
+</ul>
+
+<p>For more in-depth opinion why ORM is not always desirable, see:</p>
+
+<ul>
+	<li><a href="http://www.yegor256.com/2014/12/01/orm-offensive-anti-pattern.html" title="ORM Is an Offensive Anti-Pattern">http://www.yegor256.com/2014/12/01/orm-offensive-anti-pattern.html</a></li>
+	<li><a href="http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern" title="ORM is an anti-pattern">http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern</a></li>
+	<li><a href="http://en.wikipedia.org/wiki/Object-relational_impedance_mismatch" title="Object-relational impedance mismatch">http://en.wikipedia.org/wiki/Object-relational_impedance_mismatch</a></li>
+</ul>
+
+<hr>
+
+<p>NotORM introduced a unique and efficient solution to database abstraction.
+However, it does have a few weaknesses:</p>
+
+<ul>
+	<li>The API is not always intuitive: <code>$result-&gt;name</code> is different from <code>$result-&gt;name()</code> and more.
+	<li>There is no difference between One-To-Many and Many-To-One associations in the API (LessQL uses the <code>List</code> suffix for that).</li>
+	<li>There is no advanced save operation for nested structures.</li>
+	<li>Defining your database structure is hard (involves sub-classing).</li>
+	<li>The source code is very hard to read and understand.</li>
+</ul>
+
+<p>LessQL addresses all of these issues, is fully tested, and actively maintained.</p>
+
+<p>
+<a href="https://github.com/morris/lessql" title="Fork LessQL on GitHub">Contributions are always welcome.</a>
+Feedback is also appreciated; drop me a note at <a href="mb@morrisbrodersen.de">mb@morrisbrodersen.de</a>.
+</p>
+
+		</section>
+
+		<section id="license">
+
+<h2>License</h2>
+
+<pre>
+The MIT License (MIT)
+
+Copyright (c) 2015 Morris Brodersen &lt;mb@morrisbrodersen.de&gt;
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</pre>
+
+		</section>
+
+
+
+	</main>
+
+	<footer id="footer" role="contentinfo">
+
+		<p><a href="http://morrisbrodersen.de"><img alt="Morris Brodersen" src="img/mb.png"></a></p>
+
+	</footer>
+
+</div>
+
+<script src="js/jquery-1.11.1.min.js"></script>
+<script src="js/rainbow-custom.min.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
